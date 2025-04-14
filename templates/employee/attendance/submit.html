@@ -1,0 +1,47 @@
+{% extends "employee/base.html" %}
+
+{% block title %}Submit Attendance{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Submit Attendance</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('submit_attendance') }}">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ request.form.date or now.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="check_in" class="form-label">Check In Time</label>
+                        <input type="time" class="form-control" id="check_in" name="check_in" 
+                               value="{{ request.form.check_in or '09:00' }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="check_out" class="form-label">Check Out Time</label>
+                        <input type="time" class="form-control" id="check_out" name="check_out" 
+                               value="{{ request.form.check_out or '17:00' }}">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes (Optional)</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ request.form.notes or '' }}</textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('employee_attendance') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

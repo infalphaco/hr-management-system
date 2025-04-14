@@ -1,0 +1,28 @@
+{% extends "employee/base.html" %}
+
+{% block title %}Submit Attendance{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Submit Attendance</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" class="form-control" id="date" name="date" required>
+        </div>
+        <div class="mb-3">
+            <label for="check_in" class="form-label">Check In Time</label>
+            <input type="time" class="form-control" id="check_in" name="check_in" required>
+        </div>
+        <div class="mb-3">
+            <label for="check_out" class="form-label">Check Out Time</label>
+            <input type="time" class="form-control" id="check_out" name="check_out">
+        </div>
+        <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit for Approval</button>
+    </form>
+</div>
+{% endblock %}

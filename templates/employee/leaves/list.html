@@ -1,0 +1,64 @@
+{% extends "employee/base.html" %}
+
+{% block title %}Leave Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Leave Requests</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('employee_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Leaves</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-calendar-event me-1"></i>
+                    My Leave Requests
+                </div>
+                <a href="{{ url_for('employee_request_leave') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Request Leave
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                            <th>Submitted On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.type }}</td>
+                            <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ (leave.end_date - leave.start_date).days + 1 }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if leave.status == 'approved' %}bg-success
+                                    {% elif leave.status == 'rejected' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ leave.status }}
+                                </span>
+                            </td>
+                            <td>{{ leave.reason or '-' }}</td>
+                            <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

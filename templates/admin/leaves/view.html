@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Leave Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_leaves') }}">Leaves</a></li>
+        <li class="breadcrumb-item active">Details</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Leave Request #{{ leave.id }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>Employee Information</h6>
+                    <p>
+                        <strong>Name:</strong> {{ leave.employee.first_name }} {{ leave.employee.last_name }}<br>
+                        <strong>Department:</strong> {{ leave.employee.department.name if leave.employee.department else '-' }}<br>
+                        <strong>Position:</strong> {{ leave.employee.position.title if leave.employee.position else '-' }}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Leave Details</h6>
+                    <p>
+                        <strong>Type:</strong> {{ leave.type }}<br>
+                        <strong>Dates:</strong> {{ leave.start_date.strftime('%d %b %Y') }} to {{ leave.end_date.strftime('%d %b %Y') }}<br>
+                        <strong>Days:</strong> {{ (leave.end_date - leave.start_date).days + 1 }}<br>
+                        <strong>Status:</strong> 
+                        <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                            {{ leave.status }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6>Reason</h6>
+                <div class="card">
+                    <div class="card-body">
+                        {{ leave.reason or 'No reason provided' }}
+                    </div>
+                </div>
+            </div>
+
+            {% if leave.status == 'pending' %}
+            <div class="d-flex justify-content-end">
+                <form method="POST" action="{{ url_for('admin_process_leave', id=leave.id) }}">
+                    <input type="hidden" name="status" value="approved">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Approve
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_process_leave', id=leave.id) }}">
+                    <input type="hidden" name="status" value="rejected">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-lg"></i> Reject
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

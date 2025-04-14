@@ -1,0 +1,248 @@
+{% extends "employee/base.html" %}
+
+{% block title %}Mobile Time Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Time Tracking
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div id="statusMessage" class="alert alert-info">
+                        Ready to check in
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="display-4" id="currentTime">{{ now.strftime('%H:%M:%S') }}</div>
+                        <div class="text-muted" id="currentDate">{{ now.strftime('%A, %B %d') }}</div>
+                    </div>
+                    
+                    <div class="d-grid gap-3">
+                        <button id="checkInBtn" class="btn btn-success btn-lg py-3">
+                            <i class="bi bi-geo-alt-fill"></i> Check In
+                        </button>
+                        <button id="checkOutBtn" class="btn btn-danger btn-lg py-3" style="display: none;">
+                            <i class="bi bi-geo-alt-fill"></i> Check Out
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="form-check form-switch d-flex justify-content-center">
+                            <input class="form-check-input me-2" type="checkbox" id="remoteWorkToggle">
+                            <label class="form-check-label" for="remoteWorkToggle">Working Remotely</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted small">
+                    <div id="locationStatus">
+                        <i class="bi bi-geo-alt"></i> 
+                        <span id="locationText">Location access required</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Today's Record</h6>
+                    <div id="todayRecord">
+                        <p class="text-muted">No records yet for today</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update clock every second
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = 
+            now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('currentDate').textContent = 
+            now.toLocaleDateString([], {weekday: 'long', month: 'long', day: 'numeric'});
+    }
+    setInterval(updateClock, 1000);
+    
+    // Toggle between check in/out buttons
+    function toggleButtons(showCheckIn) {
+        const checkInBtn = document.getElementById('checkInBtn');
+        const checkOutBtn = document.getElementById('checkOutBtn');
+        
+        if (showCheckIn) {
+            checkInBtn.style.display = 'block';
+            checkOutBtn.style.display = 'none';
+        } else {
+            checkInBtn.style.display = 'none';
+            checkOutBtn.style.display = 'block';
+        }
+    }
+    
+    // Check if already checked in today
+    function checkTodayStatus() {
+        fetch('/api/attendance/today')
+            .then(response => response.json())
+            .then(data => {
+                if (data.check_in) {
+                    toggleButtons(false); // Show check-out, hide check-in
+                    document.getElementById('statusMessage').textContent = 
+                        `Checked in at ${data.check_in_time}`;
+                    
+                    if (data.check_out_time) {
+                        document.getElementById('todayRecord').innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span>Check In:</span>
+                                <strong>${data.check_in_time}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Check Out:</span>
+                                <strong>${data.check_out_time}</strong>
+                            </div>
+                        `;
+                        toggleButtons(true); // Show check-in, hide check-out
+                    } else {
+                        document.getElementById('todayRecord').innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span>Check In:</span>
+                                <strong>${data.check_in_time}</strong>
+                            </div>
+                            <p class="text-warning mt-2">Pending check out</p>
+                        `;
+                    }
+                } else {
+                    toggleButtons(true); // Show check-in, hide check-out
+                }
+            })
+            .catch(error => {
+                console.error('Error checking today status:', error);
+                toggleButtons(true); // Default to showing check-in
+            });
+    }
+    
+    // Initialize
+    checkTodayStatus();
+    
+    // Handle check in
+    document.getElementById('checkInBtn').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser");
+            return;
+        }
+        
+        document.getElementById('locationText').textContent = "Getting location...";
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const isRemote = document.getElementById('remoteWorkToggle').checked;
+                
+                fetch('/api/attendance/checkin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        is_remote: isRemote
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        toggleButtons(false); // Show check-out, hide check-in
+                        document.getElementById('statusMessage').textContent = 
+                            `Checked in at ${data.check_in_time}`;
+                        document.getElementById('locationText').textContent = 
+                            `Location recorded (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`;
+                        
+                        // Update today's record
+                        document.getElementById('todayRecord').innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span>Check In:</span>
+                                <strong>${data.check_in_time}</strong>
+                            </div>
+                            <p class="text-warning mt-2">Pending check out</p>
+                        `;
+                    } else {
+                        alert("Error: " + (data.error || "Unknown error"));
+                    }
+                });
+            },
+            function(error) {
+                let errorMessage;
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = "Location access denied. Please enable location services.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = "Location information unavailable.";
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = "Location request timed out.";
+                        break;
+                    default:
+                        errorMessage = "Unknown error occurred.";
+                }
+                document.getElementById('locationText').textContent = errorMessage;
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+    
+    // Handle check out
+    document.getElementById('checkOutBtn').addEventListener('click', function() {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                fetch('/api/attendance/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        toggleButtons(true); // Show check-in, hide check-out
+                        document.getElementById('statusMessage').className = 'alert alert-success';
+                        document.getElementById('statusMessage').textContent = 
+                            `Checked out at ${data.check_out_time}`;
+                        document.getElementById('locationText').textContent += 
+                            ` | Out: (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`;
+                        
+                        // Update today's record
+                        const checkInTime = document.querySelector('#todayRecord strong').textContent;
+                        document.getElementById('todayRecord').innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <span>Check In:</span>
+                                <strong>${checkInTime}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Check Out:</span>
+                                <strong>${data.check_out_time}</strong>
+                            </div>
+                        `;
+                    } else {
+                        alert("Error: " + (data.error || "Unknown error"));
+                    }
+                });
+            },
+            function(error) {
+                alert("Could not get location for check out");
+            }
+        );
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Department{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Edit Department</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('departments') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Departments
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('edit_department', id=department.id) }}">
+            <div class="mb-3">
+                <label for="name" class="form-label">Department Name</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ department.name }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="manager_id" class="form-label">Manager</label>
+                <select class="form-select" id="manager_id" name="manager_id">
+                    <option value="">No Manager</option>
+                    {% for manager in managers %}
+                    <option value="{{ manager.id }}" {% if department.manager_id == manager.id %}selected{% endif %}>
+                        {{ manager.first_name }} {{ manager.last_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ department.location or '' }}">
+            </div>
+            
+            <div class="mb-3">
+                <label for="budget" class="form-label">Budget</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" id="budget" name="budget" step="0.01" min="0" value="{{ department.budget or '' }}">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Update Department
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Leave Details</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('leaves') }}">Leave Management</a></li>
+        <li class="breadcrumb-item active">Leave Details</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-info-circle me-1"></i>
+            Leave Request Details
+        </div>
+        <div class="card-body">
+            <!-- Rest of your details template remains the same -->
+            <!-- Just make sure to use Bootstrap 5 classes -->
+        </div>
+    </div>
+</div>
+{% endblock %}

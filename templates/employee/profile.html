@@ -1,0 +1,82 @@
+{% extends "employee/base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">My Profile</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('employee_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Profile</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-person-lines-fill me-1"></i>
+            Personal Information
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <p class="form-control-static">{{ employee.first_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <p class="form-control-static">{{ employee.last_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <p class="form-control-static">{{ employee.email }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <p class="form-control-static">{{ employee.phone or '-' }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <p class="form-control-static">
+                            {{ employee.department.name if employee.department else '-' }}
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <p class="form-control-static">
+                            {{ employee.position.title if employee.position else '-' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-lock me-1"></i>
+            Change Password
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('employee_change_password') }}">
+                <div class="mb-3">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-key"></i> Change Password
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

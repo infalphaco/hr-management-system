@@ -1,0 +1,176 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.form-control, .form-select {
+    padding: 0.5rem 0.75rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+}
+
+.navbar {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.alert {
+    border-radius: 0.5rem;
+}
+
+/* Custom colors */
+.bg-primary {
+    background-color: #3f51b5 !important;
+}
+
+.bg-success {
+    background-color: #4caf50 !important;
+}
+
+.bg-warning {
+    background-color: #ff9800 !important;
+}
+
+.bg-info {
+    background-color: #00bcd4 !important;
+}
+
+.bg-danger {
+    background-color: #f44336 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+.login-container {
+    display: flex;
+    justify-content: space-around;
+}
+
+.login-section {
+    width: 45%;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.admin-login {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.employee-login {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.btn-admin {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-employee {
+    background-color: #28a745;
+    color: white;
+}
+
+/* Login page specific styles */
+.card-header.bg-primary {
+    background-color: #0d6efd;
+}
+
+/* Admin specific styling */
+.admin-login .card-header {
+    background-color: #dc3545 !important;
+}
+
+/* Employee specific styling */
+.employee-login .card-header {
+    background-color: #198754 !important;
+}
+
+/* Login type switcher link */
+.login-switcher {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+/* Button state transitions */
+#checkInBtn, #checkOutBtn {
+    transition: all 0.3s ease;
+}
+
+#currentTime {
+    font-weight: 300;
+}
+
+#locationStatus {
+    font-size: 0.8rem;
+}
+
+@media (max-width: 576px) {
+    .card {
+        border-radius: 0;
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+}
+
+@media (max-width: 576px) {
+    #currentTime {
+        font-size: 2.5rem;
+    }
+    .btn-lg {
+        padding: 0.8rem;
+    }
+}
+
+/* Force show buttons when their display is set to block */
+button[style*="display: block"] {
+    display: block !important;
+}
+
+/* Disabled button styling */
+.btn-secondary {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Active button styling */
+.btn-success, .btn-danger {
+    opacity: 1;
+    cursor: pointer;
+}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card {% if login_type == 'admin' %}admin-login{% else %}employee-login{% endif %}">
+                <div class="card-header {% if login_type == 'admin' %}bg-danger{% else %}bg-success{% endif %} text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{% if login_type == 'admin' %}shield-lock{% else %}person{% endif %}"></i>
+                        {{ 'Admin' if login_type == 'admin' else 'Employee' }} Login
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for(login_type + '_login') if login_type else url_for('login') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn {% if login_type == 'admin' %}btn-danger{% else %}btn-success{% endif %} w-100">
+                            Login as {{ 'Admin' if login_type == 'admin' else 'Employee' }}
+                        </button>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            {% if login_type == 'admin' %}
+                                Employee? <a href="{{ url_for('employee_login') }}">Login here</a>
+                            {% else %}
+                                Admin? <a href="{{ url_for('admin_login') }}">Login here</a>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

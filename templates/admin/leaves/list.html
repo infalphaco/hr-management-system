@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Leave Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mt-4">Leave Management</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Leaves</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between">
+                <h5 class="mb-0">Leave Requests</h5>
+                <div class="btn-group" role="group">
+                    <a href="?status=pending" class="btn btn-sm btn-outline-primary {% if status == 'pending' %}active{% endif %}">Pending</a>
+                    <a href="?status=approved" class="btn btn-sm btn-outline-success {% if status == 'approved' %}active{% endif %}">Approved</a>
+                    <a href="?status=rejected" class="btn btn-sm btn-outline-danger {% if status == 'rejected' %}active{% endif %}">Rejected</a>
+                    <a href="?status=all" class="btn btn-sm btn-outline-secondary {% if status == 'all' %}active{% endif %}">All</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody style="text-align: center;">
+                        {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.employee.first_name }} {{ leave.employee.last_name }}</td>
+                            <td>{{ leave.type }}</td>
+                            <td>
+                                {{ leave.start_date.strftime('%d %b %Y') }} - 
+                                {{ leave.end_date.strftime('%d %b %Y') }}
+                            </td>
+                            <td>{{ (leave.end_date - leave.start_date).days + 1 }}</td>
+                            <td>
+                                <span class="badge bg-{% if leave.status == 'approved' %}success{% elif leave.status == 'rejected' %}danger{% else %}warning{% endif %}">
+                                    {{ leave.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if leave.status == 'pending' %}
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <form method="POST" action="{{ url_for('process_leave', id=leave.id) }}" class="d-inline">
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-sm btn-success" style="margin-left: 10px; margin-right: 10px;">
+                                            <i class="bi bi-check-lg"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('process_leave', id=leave.id) }}" class="d-inline">
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="btn btn-sm btn-danger" style="margin-left: 10px; margin-right: 10px;">
+                                            <i class="bi bi-x-lg"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                                <a href="{{ url_for('view_leave', id=leave.id) }}" class="btn btn-sm btn-info" style="margin-left: 10px; margin-right: 10px;">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No leave requests found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_leaves', page=pagination.prev_num, status=status) }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('admin_leaves', page=page_num, status=status) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_leaves', page=pagination.next_num, status=status) }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}

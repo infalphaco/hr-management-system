@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Payroll Records</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('generate_payroll') }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-cash-coin"></i> Generate Payroll
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Pay Period</th>
+                        <th>Employee</th>
+                        <th>Basic Salary</th>
+                        <th>Allowances</th>
+                        <th>Deductions</th>
+                        <th>Tax</th>
+                        <th>Net Salary</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payroll in payrolls %}
+                    <tr>
+                        <td>
+                            {{ payroll.pay_period_start.strftime('%Y-%m-%d') }} to<br>
+                            {{ payroll.pay_period_end.strftime('%Y-%m-%d') }}
+                        </td>
+                        <td>{{ payroll.employee.first_name }} {{ payroll.employee.last_name }}</td>
+                        <td>${{ "%.2f"|format(payroll.basic_salary) }}</td>
+                        <td>${{ "%.2f"|format(payroll.allowances) }}</td>
+                        <td>${{ "%.2f"|format(payroll.deductions) }}</td>
+                        <td>${{ "%.2f"|format(payroll.tax) }}</td>
+                        <td>${{ "%.2f"|format(payroll.net_salary) }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if payroll.status == 'pending' else 'success' if payroll.status == 'paid' else 'secondary' }}">
+                                {{ payroll.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if payroll.status == 'pending' %}
+                            <a href="#" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-check-circle"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

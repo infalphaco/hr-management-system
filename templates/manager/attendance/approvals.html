@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Approvals{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Pending Attendance Approvals</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attendance in pending_attendances %}
+            <tr>
+                <td>{{ attendance.employee.first_name }} {{ attendance.employee.last_name }}</td>
+                <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ attendance.check_in.strftime('%H:%M') }}</td>
+                <td>{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '-' }}</td>
+                <td>{{ attendance.notes or '-' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('process_attendance', id=attendance.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="approved">
+                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('process_attendance', id=attendance.id) }}" class="d-inline">
+                        <input type="hidden" name="status" value="rejected">
+                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6">No pending attendance approvals</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

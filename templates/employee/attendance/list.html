@@ -1,0 +1,53 @@
+{% extends "employee/base.html" %}
+
+{% block title %}My Attendance{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Attendance Records</h2>
+        <a href="{{ url_for('submit_attendance') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Submit New Attendance
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in attendances %}
+                        <tr>
+                            <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ attendance.check_in.strftime('%H:%M') }}</td>
+                            <td>{{ attendance.check_out.strftime('%H:%M') if attendance.check_out else '-' }}</td>
+                            <td>
+                                <span class="badge bg-{% if attendance.status == 'approved' %}success
+                                                     {% elif attendance.status == 'rejected' %}danger
+                                                     {% else %}warning{% endif %}">
+                                    {{ attendance.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ attendance.notes or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">No attendance records found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

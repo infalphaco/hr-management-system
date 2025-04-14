@@ -1,0 +1,47 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style>
+        body { font-family: Arial; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        .summary { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Employee</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Status</th>
+            <th>Notes</th>
+        </tr>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ record.employee.first_name }} {{ record.employee.last_name }}</td>
+            <td>{{ record.check_in.strftime('%H:%M') if record.check_in else '-' }}</td>
+            <td>{{ record.check_out.strftime('%H:%M') if record.check_out else '-' }}</td>
+            <td>{{ record.status }}</td>
+            <td>{{ record.notes or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if include_summary %}
+    <div class="summary">
+        <h2>Summary</h2>
+        <p>Total Records: {{ records|length }}</p>
+        <p>Present: {{ records|selectattr('status', 'equalto', 'present')|list|length }}</p>
+        <p>Absent: {{ records|selectattr('status', 'equalto', 'absent')|list|length }}</p>
+        <p>Late: {{ records|selectattr('status', 'equalto', 'late')|list|length }}</p>
+    </div>
+    {% endif %}
+</body>
+</html> -->
