@@ -227,22 +227,6 @@ def generate_random_password(length=12):
                 and any(c in "!@#$%^&*" for c in password)):
             return password
 
-# def generate_password_csv(password_data):
-#     """Generate CSV file with password information"""
-#     si = StringIO()
-#     writer = csv.writer(si)
-    
-#     # Write header
-#     writer.writerow(['Name', 'Email', 'Password'])
-    
-#     # Write data
-#     for user in password_data:
-#         writer.writerow([user['name'], user['email'], user['password']])
-    
-#     output = make_response(si.getvalue())
-#     output.headers['Content-Type'] = 'text/csv'
-#     output.headers['Content-Disposition'] = 'attachment; filename=user_passwords.csv'
-#     return output
 
 @app.context_processor
 def inject_now():
@@ -539,8 +523,34 @@ def employee_leaves():
     if not is_logged_in() or is_admin():
         return redirect(url_for('login'))
     
-    leaves = Leave.query.filter_by(employee_id=get_employee_id()).order_by(Leave.start_date.desc()).all()
-    return render_template('employee/leaves/list.html', leaves=leaves)
+    # Get filter parameters
+    leave_type = request.args.get('type')
+    status = request.args.get('status')
+    year = request.args.get('year', type=int)
+    
+    # Build query
+    query = Leave.query.filter_by(employee_id=get_employee_id())
+    
+    # Apply filters
+    if leave_type:
+        query = query.filter_by(type=leave_type)
+    if status:
+        query = query.filter_by(status=status)
+    if year:
+        query = query.filter(db.or_(
+            db.extract('year', Leave.start_date) == year,
+            db.extract('year', Leave.end_date) == year
+        ))
+    
+    # Order by most recent first
+    leaves = query.order_by(Leave.start_date.desc()).all()
+    
+    # Get current year for filter dropdown
+    current_year = datetime.now().year
+    
+    return render_template('employee/leaves/list.html',
+                        leaves=leaves,
+                        current_year=current_year)
 
 @app.route('/employee/leaves/request', methods=['GET', 'POST'])
 def employee_request_leave():
@@ -672,20 +682,34 @@ def update_password():
     
     return redirect(url_for('profile'))
 
-# Employee Routes
-from datetime import datetime  # Make sure this import is at the top of your routes file
 
 @app.route('/employee/attendance')
 def employee_attendance():
     if not is_logged_in() or is_admin():
         return redirect(url_for('login'))
     
-    employee_id = get_employee_id()
-    attendances = Attendance.query.filter_by(employee_id=employee_id)\
-                                 .order_by(Attendance.date.desc())\
-                                 .all()
+    # Get filter parameters
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    status = request.args.get('status')
     
-    return render_template('employee/attendance/list.html', attendances=attendances)
+    # Build query
+    query = Attendance.query.filter_by(employee_id=get_employee_id())
+    
+    if month:
+        query = query.filter(db.extract('month', Attendance.date) == month)
+    if year:
+        query = query.filter(db.extract('year', Attendance.date) == year)
+    if status:
+        query = query.filter_by(status=status)
+    
+    attendances = query.order_by(Attendance.date.desc()).all()
+    current_year = datetime.now().year
+    
+    return render_template('employee/attendance/list.html',
+                        attendances=attendances,
+                        current_year=current_year,
+                        datetime=datetime)  # Pass datetime to template
 
 @app.route('/employee/attendance/mobile', methods=['GET'])
 def mobile_time_tracking():
