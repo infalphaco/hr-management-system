@@ -82,7 +82,7 @@
                         <td>{{ employee.email }}</td>
                         <td>{{ employee.department.name if employee.department else '-' }}</td>
                         <td>{{ employee.position.title if employee.position else '-' }}</td>
-                        <td>${{ "{:,.2f}".format(employee.salary) if employee.salary else '-' }}</td>
+                        <td>Rs. {{ "{:,.2f}".format(employee.salary) if employee.salary else '-' }}</td>
                         <td>
                             <span class="badge bg-{{ 'success' if employee.status == 'active' else 'warning' if employee.status == 'on_leave' else 'danger' }}">
                                 {{ employee.status }}
