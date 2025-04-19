@@ -12,6 +12,18 @@
     </div>
 </div>
 
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
@@ -43,19 +55,42 @@
                         <td>${{ "%.2f"|format(payroll.tax) }}</td>
                         <td>${{ "%.2f"|format(payroll.net_salary) }}</td>
                         <td>
-                            <span class="badge bg-{{ 'warning' if payroll.status == 'pending' else 'success' if payroll.status == 'paid' else 'secondary' }}">
+                            <span
+                                class="badge bg-{{ 'warning' if payroll.status == 'pending' else 'success' if payroll.status == 'paid' else 'secondary' }}">
                                 {{ payroll.status }}
                             </span>
                         </td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-outline-primary">
+                            <!-- View Details Button -->
+                            <a href="{{ url_for('view_payroll', payroll_id=payroll.id) }}"
+                                class="btn btn-sm btn-outline-primary" title="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            {% if payroll.status == 'pending' %}
-                            <a href="#" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-check-circle"></i>
+
+                            <a href="{{ url_for('generate_payslip', payroll_id=payroll.id) }}"
+                                class="btn btn-sm btn-outline-danger" title="Download Payslip (PDF)" target="_blank">
+                                <i class="bi bi-file-earmark-pdf"></i>
                             </a>
+
+                            <!-- Approve/Pay Button -->
+                            {% if payroll.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('approve_payroll', payroll_id=payroll.id) }}"
+                                style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as Paid"
+                                    onclick="return confirm('Are you sure you want to mark this payroll as paid?')">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                            </form>
                             {% endif %}
+
+                            <!-- Delete Button -->
+                            <form method="POST" action="{{ url_for('delete_payroll', payroll_id=payroll.id) }}"
+                                style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                                    onclick="return confirm('Are you sure you want to delete this payroll record?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}

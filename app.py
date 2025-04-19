@@ -1193,54 +1193,253 @@ def generate_payroll():
         return redirect(url_for('login'))
     
     if request.method == 'POST':
+        error_employees = []  # Track employees with missing/invalid data
+        successful_count = 0
+        
         try:
-            # Get form data
+            # Get form data with validation
             pay_period_start = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
             pay_period_end = datetime.strptime(request.form['end_date'], '%Y-%m-%d').date()
             payment_date = datetime.strptime(request.form['payment_date'], '%Y-%m-%d').date()
             include_bonus = 'include_bonus' in request.form
             
-            # Get all active employees
             employees = Employee.query.filter_by(status='active').all()
             
             for employee in employees:
-                # Calculate payroll - implement your business logic here
-                basic_salary = employee.salary
-                allowances = 0
-                deductions = 0
-                tax = basic_salary * 0.2  # Simplified tax calculation
-                
-                if include_bonus:
-                    allowances += basic_salary * 0.1  # Example 10% bonus
-                
-                net_salary = basic_salary + allowances - deductions - tax
-                
-                payroll = Payroll(
-                    employee_id=employee.id,
-                    pay_period_start=pay_period_start,
-                    pay_period_end=pay_period_end,
-                    basic_salary=basic_salary,
-                    allowances=allowances,
-                    deductions=deductions,
-                    tax=tax,
-                    net_salary=net_salary,
-                    payment_date=payment_date,
-                    status='pending'
-                )
-                db.session.add(payroll)
+                try:
+                    # Validate salary exists and is numeric
+                    if employee.salary is None:
+                        error_employees.append(f"{employee.first_name} {employee.last_name} (Missing salary)")
+                        continue
+                        
+                    try:
+                        basic_salary = float(employee.salary)
+                    except (TypeError, ValueError):
+                        error_employees.append(f"{employee.first_name} {employee.last_name} (Invalid salary: {employee.salary})")
+                        continue
+                    
+                    # Calculate with safe defaults
+                    allowances = 3000.0
+                    deductions = 200.0
+                    tax = basic_salary * 0.2  # 20% tax
+                    
+                    if include_bonus:
+                        allowances += basic_salary * 0.1  # 10% bonus
+                    
+                    net_salary = basic_salary + allowances - deductions - tax
+                    
+                    payroll = Payroll(
+                        employee_id=employee.id,
+                        pay_period_start=pay_period_start,
+                        pay_period_end=pay_period_end,
+                        basic_salary=basic_salary,
+                        allowances=allowances,
+                        deductions=deductions,
+                        tax=tax,
+                        net_salary=net_salary,
+                        payment_date=payment_date,
+                        status='pending'
+                    )
+                    db.session.add(payroll)
+                    successful_count += 1
+                    
+                except Exception as e:
+                    error_employees.append(f"{employee.first_name} {employee.last_name} (Error: {str(e)})")
+                    continue
             
             db.session.commit()
-            flash('Payroll generated successfully!', 'success')
+            
+            # Prepare result message
+            if successful_count > 0:
+                flash(f'Payroll generated for {successful_count} employees!', 'success')
+            if error_employees:
+                error_message = "Issues with {} employees:<br>{}".format(
+                    len(error_employees),
+                    "<br>".join(error_employees))
+                flash(Markup(error_message), 'warning')
+            
             return redirect(url_for('payroll'))
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Error generating payroll: {str(e)}', 'danger')
+            flash(f'System error generating payroll: {str(e)}', 'danger')
     
-    # Get pending payrolls for display
     pending_payrolls = Payroll.query.filter_by(status='pending').order_by(Payroll.pay_period_start.desc()).all()
-    
     return render_template('admin/payroll/generate.html', pending_payrolls=pending_payrolls)
+
+@app.route('/payroll/<int:payroll_id>')
+def view_payroll(payroll_id):
+    if not is_logged_in() or not is_admin():
+        return redirect(url_for('login'))
+    
+    payroll = Payroll.query.get_or_404(payroll_id)
+    return render_template('admin/payroll/view.html', payroll=payroll)
+
+@app.route('/payroll/<int:payroll_id>/approve', methods=['POST'])
+def approve_payroll(payroll_id):
+    if not is_logged_in() or not is_admin():
+        return redirect(url_for('login'))
+    
+    payroll = Payroll.query.get_or_404(payroll_id)
+    try:
+        payroll.status = 'paid'
+        payroll.payment_date = datetime.utcnow()
+        db.session.commit()
+        flash('Payroll marked as paid successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error approving payroll: {str(e)}', 'danger')
+    
+    return redirect(url_for('payroll'))
+
+@app.route('/payroll/<int:payroll_id>/delete', methods=['POST'])
+def delete_payroll(payroll_id):
+    if not is_logged_in() or not is_admin():
+        return redirect(url_for('login'))
+    
+    payroll = Payroll.query.get_or_404(payroll_id)
+    try:
+        db.session.delete(payroll)
+        db.session.commit()
+        flash('Payroll record deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deleting payroll: {str(e)}', 'danger')
+    
+    return redirect(url_for('payroll'))
+
+from flask import make_response
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from io import BytesIO
+
+@app.route('/payroll/<int:payroll_id>/payslip')
+def generate_payslip(payroll_id):
+    try:
+        if not is_logged_in() or not is_admin():
+            return redirect(url_for('login'))
+
+        payroll = Payroll.query.get_or_404(payroll_id)
+        employee = payroll.employee
+
+        # Create PDF buffer
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
+        
+        # Build PDF content
+        elements = []
+        
+        # 1. Company Header
+        elements.append(Paragraph("YOUR COMPANY NAME", styles['Title']))
+        elements.append(Paragraph("PAYSLIP", styles['Heading1']))
+        elements.append(Spacer(1, 12))
+        
+        # 2. Employee Information
+        employee_info = [
+            ["Employee ID:", str(employee.id)],
+            ["Name:", f"{employee.first_name} {employee.last_name}"],
+            ["Position:", employee.position.title if employee.position else "N/A"],
+            ["Department:", employee.department.name if employee.department else "N/A"],
+            ["Pay Period:", f"{payroll.pay_period_start.strftime('%d-%b-%Y')} to {payroll.pay_period_end.strftime('%d-%b-%Y')}"],
+            ["Payment Status:", payroll.status.capitalize()],
+            ["Payment Date:", payroll.payment_date.strftime('%d-%b-%Y') if payroll.payment_date else "Pending"]
+        ]
+        
+        info_table = Table(employee_info, colWidths=[120, 250])
+        info_table.setStyle(TableStyle([
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+            ('FONTSIZE', (0,0), (-1,-1), 10),
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ]))
+        elements.append(info_table)
+        elements.append(Spacer(1, 24))
+        
+        # 3. Earnings and Deductions
+        earnings = [
+            ["Earnings", "Amount"],
+            ["Basic Salary", f"${payroll.basic_salary:.2f}"],
+            ["Allowances", f"${payroll.allowances:.2f}"],
+            ["", ""],
+            ["Total Earnings", f"${(payroll.basic_salary + payroll.allowances):.2f}"]
+        ]
+        
+        deductions = [
+            ["Deductions", "Amount"],
+            ["Tax", f"${payroll.tax:.2f}"],
+            ["Other Deductions", f"${payroll.deductions:.2f}"],
+            ["", ""],
+            ["Total Deductions", f"${(payroll.tax + payroll.deductions):.2f}"]
+        ]
+        
+        # Create tables with styles
+        table_style = TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f8f9fa")),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor("#212529")),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 10),
+            ('BOTTOMPADDING', (0,0), (-1,0), 12),
+            ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor("#e9ecef")),
+            ('LINEABOVE', (0,-1), (-1,-1), 1, colors.HexColor("#495057")),
+            ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+        ])
+        
+        earnings_table = Table(earnings, colWidths=[200, 100])
+        earnings_table.setStyle(table_style)
+        
+        deductions_table = Table(deductions, colWidths=[200, 100])
+        deductions_table.setStyle(table_style)
+        
+        # Add tables to elements
+        elements.append(Paragraph("Earnings", styles['Heading2']))
+        elements.append(earnings_table)
+        elements.append(Spacer(1, 24))
+        
+        elements.append(Paragraph("Deductions", styles['Heading2']))
+        elements.append(deductions_table)
+        elements.append(Spacer(1, 24))
+        
+        # 4. Net Pay Summary
+        net_pay_style = TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#0d6efd")),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,0), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 12),
+        ])
+        
+        net_pay_table = Table([[f"NET PAY: ${payroll.net_salary:.2f}"]], colWidths=[300])
+        net_pay_table.setStyle(net_pay_style)
+        elements.append(net_pay_table)
+        
+        # 5. Footer
+        elements.append(Spacer(1, 36))
+        elements.append(Paragraph("This is computer generated payslip and does not require signature.", 
+                                styles['Italic']))
+        elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%d-%b-%Y %H:%M')}", 
+                                styles['Italic']))
+        
+        # Build PDF
+        doc.build(elements)
+        buffer.seek(0)
+        
+        # Create response
+        filename = f"payslip_{employee.last_name}_{payroll.pay_period_start.strftime('%Y%m')}.pdf"
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+        
+        return response
+    
+    except Exception as e:
+        flash(f"Error generating payslip: {str(e)}", 'danger')
+        return redirect(url_for('payroll'))
 
 # Report Routes
 @app.route('/reports/attendance')
