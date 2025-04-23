@@ -1178,14 +1178,36 @@ def process_leave(id):
     
     return redirect(url_for('leave_details', id=id))
 
-# Payroll Management Routes
 @app.route('/payroll')
-def payroll():  # Changed from payroll_list to payroll
+def payroll():
     if not is_logged_in() or not is_admin():
         return redirect(url_for('login'))
     
-    payrolls = Payroll.query.order_by(Payroll.pay_period_start.desc()).all()
-    return render_template('admin/payroll/list.html', payrolls=payrolls)
+    # Get filter parameters
+    employee_id = request.args.get('employee_id', type=int)
+    status = request.args.get('status')
+    pay_period_start = request.args.get('pay_period_start')
+    pay_period_end = request.args.get('pay_period_end')
+    
+    # Build query
+    query = Payroll.query.join(Employee)
+    
+    # Apply filters
+    if employee_id:
+        query = query.filter(Payroll.employee_id == employee_id)
+    if status:
+        query = query.filter(Payroll.status == status)
+    if pay_period_start:
+        query = query.filter(Payroll.pay_period_start >= datetime.strptime(pay_period_start, '%Y-%m-%d').date())
+    if pay_period_end:
+        query = query.filter(Payroll.pay_period_end <= datetime.strptime(pay_period_end, '%Y-%m-%d').date())
+    
+    payrolls = query.order_by(Payroll.pay_period_start.desc()).all()
+    employees = Employee.query.order_by(Employee.first_name).all()
+    
+    return render_template('admin/payroll/list.html',
+                         payrolls=payrolls,
+                         employees=employees)
 
 @app.route('/payroll/generate', methods=['GET', 'POST'])
 def generate_payroll():

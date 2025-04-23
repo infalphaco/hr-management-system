@@ -24,6 +24,59 @@
 {% endif %}
 {% endwith %}
 
+<!-- Filter Form -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{{ url_for('payroll') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="employee_id" class="form-label">Employee</label>
+                <select name="employee_id" id="employee_id" class="form-select">
+                    <option value="">All Employees</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if request.args.get('employee_id')|int==employee.id %}selected{% endif %}>
+                        {{ employee.first_name }} {{ employee.last_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {% if request.args.get('status')=='pending' %}selected{% endif %}>Pending</option>
+                    <option value="paid" {% if request.args.get('status')=='paid' %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="pay_period_start" class="form-label">Pay Period Start</label>
+                <input type="date" name="pay_period_start" id="pay_period_start" 
+                       class="form-control" value="{{ request.args.get('pay_period_start') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="pay_period_end" class="form-label">Pay Period End</label>
+                <input type="date" name="pay_period_end" id="pay_period_end" 
+                       class="form-control" value="{{ request.args.get('pay_period_end') }}">
+            </div>
+            
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </button>
+                <a href="{{ url_for('payroll') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Payroll Records Table -->
 <div class="card">
     <div class="card-body">
         <div class="table-responsive">
@@ -49,11 +102,11 @@
                             {{ payroll.pay_period_end.strftime('%Y-%m-%d') }}
                         </td>
                         <td>{{ payroll.employee.first_name }} {{ payroll.employee.last_name }}</td>
-                        <td>${{ "%.2f"|format(payroll.basic_salary) }}</td>
-                        <td>${{ "%.2f"|format(payroll.allowances) }}</td>
-                        <td>${{ "%.2f"|format(payroll.deductions) }}</td>
-                        <td>${{ "%.2f"|format(payroll.tax) }}</td>
-                        <td>${{ "%.2f"|format(payroll.net_salary) }}</td>
+                        <td>Rs. {{ "%.2f"|format(payroll.basic_salary) }}</td>
+                        <td>Rs. {{ "%.2f"|format(payroll.allowances) }}</td>
+                        <td>Rs. {{ "%.2f"|format(payroll.deductions) }}</td>
+                        <td>Rs. {{ "%.2f"|format(payroll.tax) }}</td>
+                        <td>Rs. {{ "%.2f"|format(payroll.net_salary) }}</td>
                         <td>
                             <span
                                 class="badge bg-{{ 'warning' if payroll.status == 'pending' else 'success' if payroll.status == 'paid' else 'secondary' }}">
@@ -92,6 +145,10 @@
                                 </button>
                             </form>
                         </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">No payroll records found</td>
                     </tr>
                     {% endfor %}
                 </tbody>
